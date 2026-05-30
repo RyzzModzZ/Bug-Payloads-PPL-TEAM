@@ -1,15 +1,2 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "**/*.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
-}
+# This file is intentionally left minimal.
+# This project is a static HTML site deployed via Vercel.
