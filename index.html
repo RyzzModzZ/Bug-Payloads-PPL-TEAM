@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPL PROJECT | PAYLOAD BUG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-glow: #4ade80;
+            --primary-dim: rgba(74, 222, 128, 0.2);
+            --bg-dark: #070707;
+            --panel-bg: rgba(20, 20, 20, 0.6);
+            --border-glow: rgba(74, 222, 128, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- BACKGROUND VIDEO MP4 STYLING --- */
+        .video-background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+        }
+
+        .video-background-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Memastikan video menutupi seluruh layar tanpa distorsi */
+            opacity: 0.18;    /* Menjaga kegelapan agar teks panel depan tetap kontras & terbaca */
+        }
+
+        /* Glassmorphism Wrapper */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            width: 92%;
+            max-width: 620px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(74, 222, 128, 0.05);
+            margin: 20px 0;
+        }
+
+        /* Header User Info */
+        .user-header {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-glow {
+            width: 48px;
+            height: 48px;
+            background: rgba(74, 222, 128, 0.1);
+            border: 2px solid var(--border-glow);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 15px var(--primary-dim);
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 12px rgba(74, 222, 128, 0.2); border-color: rgba(74, 222, 128, 0.3); }
+            50% { box-shadow: 0 0 22px rgba(74, 222, 128, 0.5); border-color: var(--primary-glow); }
+        }
+
+        .user-meta {
+            flex-grow: 1;
+            margin-left: 14px;
+        }
+
+        .username {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+
+        .role-badge {
+            display: inline-block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--primary-glow);
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid var(--primary-glow);
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        .expiry-box {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Progress Steps */
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 30%;
+        }
+
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.4);
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: var(--primary-glow);
+            color: #ffffff;
+            box-shadow: 0 0 12px var(--primary-dim);
+        }
+
+        .step.complete .step-circle {
+            background: var(--primary-glow);
+            border-color: var(--primary-glow);
+            color: #000000;
+        }
+
+        .step-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            margin-top: 6px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .step.active .step-label { color: #fff; }
+        .step.complete .step-label { color: var(--primary-glow); }
+
+        .prog-line {
+            flex-grow: 1;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .prog-line-fill {
+            position: absolute;
+            left: 0; top: 0; height: 100%; width: 0%;
+            background: var(--primary-glow);
+            transition: width 0.4s ease;
+        }
+
+        /* Card Section UI */
+        .panel-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .card-title-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-icon {
+            background: rgba(255,255,255,0.08);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Inputs Elements */
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.4);
+            font-size: 0.95rem;
+        }
+
+        .text-field {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 12px 12px 12px 42px;
+            color: #fff;
+            font-size: 1rem;
+            border-radius: 10px;
+            outline: none;
+            font-family: 'Share Tech Mono', monospace;
+            transition: border-color 0.2s;
+        }
+
+        .text-field:focus {
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.15);
+        }
+
+        .sub-info {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 6px;
+            display: block;
+        }
+
+        /* Payload Chips Selectable */
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chip.selected {
+            background: var(--primary-glow);
+            border-color: var(--primary-glow);
+            color: #000000;
+            font-weight: 700;
+            box-shadow: 0 0 10px var(--primary-dim);
+        }
+
+        /* Sender Mode Selector Grid */
+        .sender-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .sender-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sender-box i {
+            font-size: 1.3rem;
+            margin-bottom: 6px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .sender-box.active {
+            background: rgba(74, 222, 128, 0.12);
+            border-color: var(--primary-glow);
+        }
+
+        .sender-box.active i { color: var(--primary-glow); }
+
+        .sender-label {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .sender-desc {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        /* Flex Row Dual Inputs */
+        .dual-inputs {
+            display: flex;
+            gap: 12px;
+        }
+
+        .dual-inputs .input-wrapper {
+            flex: 1;
+        }
+
+        .input-wrapper label {
+            display: block;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 4px;
+        }
+
+        .small-field {
+            padding-left: 14px !important;
+        }
+
+        /* System Status Icons Row */
+        .status-row {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .status-node {
+            text-align: center;
+            width: 28%;
+        }
+
+        .node-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            margin: 0 auto 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.05);
+        }
+
+        .node-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .node-line {
+            width: 40px;
+            height: 3px;
+            background: var(--primary-glow);
+            margin: 4px auto 0;
+            border-radius: 2px;
+            box-shadow: 0 0 6px var(--primary-glow);
+        }
+
+        /* Action Launch Button */
+        .btn-launch {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--border-glow);
+            border-radius: 14px;
+            padding: 16px;
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            font-weight: 900;
+            font-size: 1rem;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.1);
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-launch:active {
+            transform: scale(0.97);
+        }
+
+        .btn-launch:hover:not(:disabled) {
+            background: rgba(74, 222, 128, 0.05);
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 25px rgba(74, 222, 128, 0.25);
+        }
+
+        .btn-launch:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Footer Info Warn Bar */
+        .footer-info {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 14px;
+        }
+
+        /* Overlay Dialog Popup Modal */
+        .popup-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .popup-overlay.show {
+            opacity: 1; pointer-events: auto;
+        }
+
+        .popup-box {
+            background: #0d0d0d;
+            border: 1px solid var(--border-glow);
+            width: 90%; max-width: 440px;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(74, 222, 128, 0.2);
+            transform: scale(0.85);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup-overlay.show .popup-box {
+            transform: scale(1);
+        }
+
+        .popup-icon {
+            width: 64px; height: 64px;
+            background: rgba(74, 222, 128, 0.1);
+            border: 2px solid var(--primary-glow);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            margin: 0 auto 16px;
+            font-size: 1.8rem;
+            color: var(--primary-glow);
+            box-shadow: 0 0 20px var(--primary-dim);
+        }
+
+        .popup-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .details-wrapper {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: left;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 6px;
+        }
+        .detail-item:last-child { margin-bottom: 0; }
+        .detail-lbl { color: rgba(255,255,255,0.5); width: 110px; }
+        .detail-val { color: var(--primary-glow); }
+
+        .btn-close-pop {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid var(--primary-glow);
+            color: var(--primary-glow);
+            width: 100%; padding: 12px;
+            border-radius: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-close-pop:hover { background: var(--primary-glow); color: #000; }
+
+        /* Loader Spinner */
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top: 2px solid #ffffff;
+            width: 18px; height: 18px;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="video-background-container">
+        <video autoplay loop muted playsinline id="bg-video">
+            <source src="background.mp4" type="video/mp4">
+            Your browser does not support HTML5 video.
+        </video>
+    </div>
+
+    <div class="main-container">
+        
+        <div class="user-header">
+            <div class="avatar-glow">
+                <i class="fa-solid fa-crown" style="color: var(--primary-glow)"></i>
+            </div>
+            <div class="user-meta">
+                <div class="username" id="display-user">Darkness</div>
+                <div class="role-badge">Devloper</div>
+            </div>
+            <div class="expiry-box">
+                <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4)">EXPIRY</div>
+                <div style="font-size: 0.85rem; font-weight: bold;" id="display-exp">PERMANENT</div>
+            </div>
+        </div>
+
+        <div class="progress-indicator">
+            <div class="step active" id="step-0">
+                <div class="step-circle"><i class="fa-solid fa-pen-to-square"></i></div>
+                <div class="step-label">INPUT</div>
+            </div>
+            <div class="prog-line"><div class="prog-line-fill" id="line-0"></div></div>
+            <div class="step" id="step-1">
+                <div class="step-circle"><i class="fa-solid fa-gears"></i></div>
+                <div class="step-label">PROCESS</div>
+            </div>
+            <div class="prog-line"><div class="prog-line-fill" id="line-1"></div></div>
+            <div class="step" id="step-2">
+                <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="step-label">COMPLETE</div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="card-title-row">
+                <div class="card-icon"><i class="fa-solid fa-phone"></i></div>
+                <div class="card-title">Target Number</div>
+            </div>
+            <div class="input-wrapper">
+                <i class="fa-solid fa-earth-southeast-asia"></i>
+                <input type="text" id="target-number" class="text-field" placeholder="e.g. 628xxxxxxxxx">
+            </div>
+            <span class="sub-info">Gunakan format kode negara internasional tanpa simbol + atau angka 0 awal.</span>
+        </div>
+
+        <div class="panel-card">
+            <div class="card-title-row">
+                <div class="card-icon"><i class="fa-solid fa-bug"></i></div>
+                <div class="card-title">Select Payloads</div>
+                <span id="selected-count" style="margin-left: auto; font-family:'Share Tech Mono'; font-size:0.8rem; color:var(--primary-glow); background: rgba(74,222,128,0.15); padding:2px 8px; border-radius:6px;">1 Terpilih</span>
+            </div>
+            <div class="chips-container" id="payload-box"></div>
+            <span class="sub-info" style="margin-top: 10px;"><i class="fa-solid fa-info-circle"></i> Anda dapat memilih lebih dari satu payload sekaligus untuk serangan komparatif.</span>
+        </div>
+
+        <div class="panel-card">
+            <div class="card-title-row">
+                <div class="card-icon"><i class="fa-solid fa-server"></i></div>
+                <div class="card-title">Sender Type</div>
+            </div>
+            <div class="sender-grid">
+                <div class="sender-box active" id="send-global" onclick="setSenderType('global')">
+                    <i class="fa-solid fa-globe"></i>
+                    <div class="sender-label">Global</div>
+                    <div class="sender-desc" id="limit-global">Loading limit...</div>
+                </div>
+                <div class="sender-box" id="send-private" onclick="setSenderType('private')">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <div class="sender-label">Private</div>
+                    <div class="sender-desc" id="limit-private">Loading limit...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="card-title-row">
+                <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
+                <div class="card-title">Quantity & Delay Config</div>
+            </div>
+            <div class="dual-inputs">
+                <div class="input-wrapper">
+                    <label for="input-qty">Quantity</label>
+                    <input type="number" id="input-qty" class="text-field small-field" value="5">
+                </div>
+                <div class="input-wrapper">
+                    <label for="input-delay">Delay (ms)</label>
+                    <input type="number" id="input-delay" class="text-field small-field" value="500" disabled>
+                </div>
+            </div>
+            <span class="sub-info" id="delay-warn-text">Catatan: Mode Global mewajibkan interval jeda tetap sebesar 500ms.</span>
+        </div>
+
+        <div class="panel-card">
+            <div class="card-title-row">
+                <div class="card-icon"><i class="fa-solid fa-wave-square"></i></div>
+                <div class="card-title">System Node Clusters</div>
+            </div>
+            <div class="status-row">
+                <div class="status-node">
+                    <div class="node-box"><i class="fa-solid fa-server" style="color: #fff"></i></div>
+                    <div class="node-label">Server Main</div>
+                    <div class="node-line"></div>
+                </div>
+                <div class="status-node">
+                    <div class="node-box"><i class="fa-solid fa-shield-halved" style="color: #fff"></i></div>
+                    <div class="node-label">Proxy Wall</div>
+                    <div class="node-line"></div>
+                </div>
+                <div class="status-node">
+                    <div class="node-box"><i class="fa-solid fa-database" style="color: #fff"></i></div>
+                    <div class="node-label">Data Storage</div>
+                    <div class="node-line"></div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-launch" id="launch-btn" onclick="executePayloadLaunch()">
+            <div class="spinner" id="btn-spinner"></div>
+            <i class="fa-solid fa-paper-plane" id="btn-icon"></i> 
+            <span id="btn-text">LAUNCH CUSTOM PAYLOAD</span>
+        </button>
+
+        <div class="footer-info">
+            <i class="fa-solid fa-triangle-exclamation" style="color: var(--primary-glow)"></i>
+            <div>Custom payload injection matrix protocol active. Use with maximum calculation.</div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="success-popup">
+        <div class="popup-box">
+            <div class="popup-icon"><i class="fa-solid fa-check-double"></i></div>
+            <div class="popup-title">ATTACK INJECTED!</div>
+            
+            <div class="details-wrapper">
+                <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom:4px;">ATTACK PARAMETERS:</div>
+                <div class="detail-item"><span class="detail-lbl">Target:</span><span class="detail-val" id="pop-target">None</span></div>
+                <div class="detail-item"><span class="detail-lbl">Engine Type:</span><span class="detail-val" id="pop-engine">None</span></div>
+                <div class="detail-item"><span class="detail-lbl">Payload ID:</span><span class="detail-val" id="pop-bugs" style="font-size:0.75rem;">None</span></div>
+                <div class="detail-item"><span class="detail-lbl">Quantity:</span><span class="detail-val" id="pop-qty">0</span></div>
+                <div class="detail-item"><span class="detail-lbl">Delay Interval:</span><span class="detail-val" id="pop-delay">0ms</span></div>
+            </div>
+
+            <button class="btn-close-pop" onclick="closePopup()">DISMISS CONSOLE</button>
+        </div>
+    </div>
+
+    <script>
+        const listPayloadData = [
+            { "bug_id": "aicrash", "bug_name": "CRASH ANDROID" },
+            { "bug_id": "delayinvis", "bug_name": "DELAY INVISIBLE" },
+            { "bug_id": "fcomsg", "bug_name": "FORCE CLOSE ONE MSG" },
+            { "bug_id": "permencall", "bug_name": "PRANK CALL" },
+            { "bug_id": "stickerz", "bug_name": "STICKER PACK" }, 
+            { "bug_id": "ios", "bug_name": "FC IOS INVISIBLE" }, 
+            { "bug_id": "uix", "bug_name": "BLANK UIX" }, 
+            { "bug_id": "kill1", "bug_name": "KILL ANDRO" },
+            { "bug_id": "bokep", "bug_name": "BOKEP×CRASH" }, 
+            { "bug_id": "click", "bug_name": "CRASH NO CLICK" }, 
+            { "bug_id": "sotp", "bug_name": "SPAM OTP" },
+            { "bug_id": "freeze", "bug_name": "FREEZE×DELAY" }
+        ];
+
+        const limits = {
+            "global": "Max Qty: 10, Delay: 500ms (Fixed)",
+            "private": "Max Qty: 200, Min Delay: 10ms"
+        };
+
+        let selectedBugsArray = [];
+        let currentSenderType = "global";
+
+        window.onload = function() {
+            document.getElementById('limit-global').innerText = limits.global;
+            document.getElementById('limit-private').innerText = limits.private;
+            renderPayloadChips();
+            
+            // Opsional: Baris ini memastikan video langsung berjalan otomatis meskipun ada aturan browser ketat
+            const video = document.getElementById('bg-video');
+            if(video) {
+                video.play().catch(error => console.log("Autoplay dicegah browser, perlu interaksi klik pertama."));
+            }
+        };
+
+        function renderPayloadChips() {
+            const container = document.getElementById('payload-box');
+            container.innerHTML = "";
+            
+            listPayloadData.forEach((bug, index) => {
+                const chip = document.createElement('div');
+                chip.className = "chip";
+                chip.id = `chip-${bug.bug_id}`;
+                chip.innerHTML = `<i class="fa-solid fa-virus-covid"></i> ${bug.bug_name}`;
+                chip.onclick = () => togglePayloadSelection(bug.bug_id);
+                container.appendChild(chip);
+
+                if(index === 0) {
+                    togglePayloadSelection(bug.bug_id);
+                }
+            });
+        }
+
+        function togglePayloadSelection(bugId) {
+            const index = selectedBugsArray.indexOf(bugId);
+            const chipElement = document.getElementById(`chip-${bugId}`);
+
+            if(index > -1) {
+                selectedBugsArray.splice(index, 1);
+                if(chipElement) chipElement.classList.remove('selected');
+            } else {
+                selectedBugsArray.push(bugId);
+                if(chipElement) chipElement.classList.add('selected');
+            }
+
+            document.getElementById('selected-count').innerText = `${selectedBugsArray.length} Terpilih`;
+        }
+
+        function setSenderType(type) {
+            currentSenderType = type;
+            const globalBox = document.getElementById('send-global');
+            const privateBox = document.getElementById('send-private');
+            const delayInput = document.getElementById('input-delay');
+            const warnText = document.getElementById('delay-warn-text');
+            const qtyInput = document.getElementById('input-qty');
+
+            if(type === 'global') {
+                globalBox.classList.add('active');
+                privateBox.classList.remove('active');
+                delayInput.value = "500";
+                delayInput.disabled = true;
+                qtyInput.value = Math.min(parseInt(qtyInput.value) || 5, 10);
+                warnText.innerText = "Catatan: Mode Global mewajibkan interval jeda tetap sebesar 500ms.";
+            } else {
+                privateBox.classList.add('active');
+                globalBox.classList.remove('active');
+                delayInput.disabled = false;
+                delayInput.value = "100";
+                warnText.innerText = "Konfigurasi Private Modul Terbuka. Gunakan delay minimal 10ms secara bijak.";
+            }
+        }
+
+        function executePayloadLaunch() {
+            const rawTarget = document.getElementById('target-number').value.trim();
+            const qty = parseInt(document.getElementById('input-qty').value) || 0;
+            const delay = parseInt(document.getElementById('input-delay').value) || 0;
+
+            const cleanTarget = rawTarget.replace(/[^\d]/g, '');
+            if (!cleanTarget || cleanTarget.startsWith('0') || cleanTarget.length < 8) {
+                alert("❌ INVALID NUMBER\nGunakan nomor kode internasional standar (misal: 628xx), bukan diawali angka 0.");
+                return;
+            }
+
+            if(selectedBugsArray.length === 0) {
+                alert("❌ NO PAYLOAD SELECTED\nHarap pilih minimal satu tipe payload bug di area konsol chip.");
+                return;
+            }
+
+            if(currentSenderType === 'global' && qty > 10) {
+                alert("❌ OVER LIMIT\nEngine Global membatasi kuantitas kiriman maksimal sebanyak 10 Unit!");
+                return;
+            }
+            if(currentSenderType === 'private' && (qty > 200 || qty < 1)) {
+                alert("❌ OVER LIMIT\nEngine Private membatasi kuantitas kiriman antara rentang 1 - 200 Unit.");
+                return;
+            }
+
+            setUiStateSending(true);
+
+            setTimeout(() => {
+                setUiStateSending(false);
+                
+                document.getElementById('pop-target').innerText = `+${cleanTarget}`;
+                document.getElementById('pop-engine').innerText = currentSenderType.toUpperCase();
+                document.getElementById('pop-bugs').innerText = selectedBugsArray.join(', ');
+                document.getElementById('pop-qty').innerText = `${qty} Request`;
+                document.getElementById('pop-delay').innerText = `${delay}ms`;
+
+                document.getElementById('success-popup').classList.add('show');
+                updateStepperProgress(2);
+            }, 2500);
+        }
+
+        function setUiStateSending(isSending) {
+            const btn = document.getElementById('launch-btn');
+            const spinner = document.getElementById('btn-spinner');
+            const icon = document.getElementById('btn-icon');
+            const text = document.getElementById('btn-text');
+
+            if(isSending) {
+                btn.disabled = true;
+                spinner.style.display = "block";
+                icon.style.display = "none";
+                text.innerText = "SENDING PACKETS ATTACK...";
+                updateStepperProgress(1);
+            } else {
+                btn.disabled = false;
+                spinner.style.display = "none";
+                icon.style.display = "block";
+                text.innerText = "LAUNCH CUSTOM PAYLOAD";
+            }
+        }
+
+        function updateStepperProgress(step) {
+            for(let i=0; i<=2; i++) {
+                document.getElementById(`step-${i}`).classList.remove('active', 'complete');
+                if(i < 2) document.getElementById(`line-${i}`).style.width = "0%";
+            }
+
+            if(step === 0) {
+                document.getElementById('step-0').classList.add('active');
+            } else if(step === 1) {
+                document.getElementById('step-0').classList.add('complete');
+                document.getElementById('line-0').style.width = "100%";
+                document.getElementById('step-1').classList.add('active');
+            } else if(step === 2) {
+                document.getElementById('step-0').classList.add('complete');
+                document.getElementById('line-0').style.width = "100%";
+                document.getElementById('step-1').classList.add('complete');
+                document.getElementById('line-1').style.width = "100%";
+                document.getElementById('step-2').classList.add('complete');
+            }
+        }
+
+        function closePopup() {
+            document.getElementById('success-popup').classList.remove('show');
+            updateStepperProgress(0);
+        }
+    </script>
+</body>
+</html>
